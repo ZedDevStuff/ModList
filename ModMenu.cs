@@ -8,26 +8,26 @@ namespace ModList
 {
     public class ModMenu : MonoBehaviour
     {
-        private Image Icon;
-        private TMP_Text ModName, Author, Version, Description;
-        private Button ExitButton, OpenWebsiteButton, OpenThunderstoreButton;
-        private TMP_InputField Searchbox;
-        private ScrollRect Mods;
+        private Image? Icon;
+        private TMP_Text? ModName, Author, Version, Description;
+        private Button? ExitButton, OpenWebsiteButton, OpenThunderstoreButton;
+        private TMP_InputField? Searchbox;
+        private ScrollRect? Mods;
         private List<KeyValuePair<ModEntry, GameObject>> AllModsObjects = new();
         private List<KeyValuePair<ModEntry, GameObject>> FilteredMods = new();
         private ModEntry CurrentMod;
         public void SetCurrentMod(ModEntry mod)
         {
             CurrentMod = mod;
-            Icon.sprite = mod.Icon;
-            ModName.text = mod.Name;
-            Author.text = "by " + mod.Author;
-            Version.text = "v" + mod.BepInExVersion;
-            Description.text = mod.Description;
-            if(mod.IsFromThunderstore) OpenThunderstoreButton.gameObject.SetActive(true);
-            else OpenThunderstoreButton.gameObject.SetActive(false);
-            if(mod.AuthorWebsite != "") OpenWebsiteButton.gameObject.SetActive(true);
-            else OpenWebsiteButton.gameObject.SetActive(false);
+            Icon!.sprite = mod.Icon;
+            ModName!.text = mod.Name;
+            Author!.text = "by " + mod.Author;
+            Version!.text = "v" + mod.BepInExVersion;
+            Description!.text = mod.Description;
+            if(mod.IsFromThunderstore) OpenThunderstoreButton!.gameObject.SetActive(true);
+            else OpenThunderstoreButton!.gameObject.SetActive(false);
+            if(mod.AuthorWebsite != "") OpenWebsiteButton!.gameObject.SetActive(true);
+            else OpenWebsiteButton!.gameObject.SetActive(false);
         }
         public void SetCurrentMod(GameObject g)
         {
@@ -54,13 +54,16 @@ namespace ModList
 
             foreach(ModEntry mod in Plugin.Mods)
             {
-                GameObject card = Instantiate(Plugin.ModCardPrefab, Mods.content);
-                card.AddComponent<Button>().onClick.AddListener(() => SetCurrentMod(card));
-                AllModsObjects.Add(new(mod, card));
-                card.transform.Find("Icon").GetComponent<Image>().sprite = mod.Icon;
-                card.transform.Find("Icon/ModName").GetComponent<TMP_Text>().text = mod.Name;
-                card.transform.Find("Icon/Version").GetComponent<TMP_Text>().text = "v" + mod.BepInExVersion;
-                card.transform.Find("Icon/Author").GetComponent<TMP_Text>().text = "by " + mod.Author;
+                GameObject? card = Instantiate(Plugin.ModCardPrefab, Mods.content);
+                card?.AddComponent<Button>().onClick.AddListener(() => SetCurrentMod(card));
+                if(card != null)
+                {
+                    AllModsObjects.Add(new(mod, card));
+                    card.transform.Find("Icon").GetComponent<Image>().sprite = mod.Icon;
+                    card.transform.Find("Icon/ModName").GetComponent<TMP_Text>().text = mod.Name;
+                    card.transform.Find("Icon/Version").GetComponent<TMP_Text>().text = "v" + mod.BepInExVersion;
+                    card.transform.Find("Icon/Author").GetComponent<TMP_Text>().text = "by " + mod.Author;
+                }
             }
             SetCurrentMod(AllModsObjects.First().Key);
         }

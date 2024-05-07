@@ -16,12 +16,12 @@ using UnityEngine.UI;
 
 namespace ModList
 {
-    [BepInPlugin("com.zeddevstuff.modlist", "ModList", "1.0.0")]
+    [BepInPlugin("com.zeddevstuff.modlist", "ModList", "1.0.1")]
     public class Plugin : BaseUnityPlugin
     {
         public static List<ModEntry> Mods = new();
-        private static AssetBundle Bundle;
-        internal static GameObject ModmenuPrefab, ModMenu, ModCardPrefab, ModsButton;
+        private static AssetBundle? Bundle;
+        internal static GameObject? ModmenuPrefab, ModCardPrefab, ModsButton;
         private void Awake()
         {
             Logger.LogInfo($"Plugin {PluginInfo.PLUGIN_GUID} is loaded!");
@@ -49,17 +49,30 @@ namespace ModList
                 {
                     if(!dir.Name.Contains("plugins"))
                     {
+                        dir = RecurseUntilParentIs(dir, "plugins") ?? dir;
                         FileInfo? manifestFile = dir.GetFiles("manifest.json").FirstOrDefault();
                         if(manifestFile != null)
                         {
-                            JObject? manifest = JsonConvert.DeserializeObject<JObject>(File.ReadAllText(manifestFile.FullName));
+                            JObject? manifest = null;
+                            try
+                            {
+                                manifest = JsonConvert.DeserializeObject<JObject>(File.ReadAllText(manifestFile.FullName));
+                            }
+                            catch
+                            {
+                                Logger.LogWarning($"Failed to parse manifest.json for {entry.Name}");
+                            }
                             if(manifest != null)
                             {
                                 FileInfo? icon = manifestFile.Directory.GetFiles("icon.png").FirstOrDefault();
                                 Texture2D tex = new(256, 256);
-                                if (icon != null) tex.LoadImage(File.ReadAllBytes(icon.FullName));
+                                if (icon != null)
+                                {
+                                    tex.LoadImage(File.ReadAllBytes(icon.FullName));
+                                }
                                 else tex.LoadImage(Resource1.noicon);
                                 entry.Icon = Sprite.Create(tex, new Rect(0, 0, tex.width, tex.height), new(0.5f, 0.5f));
+                                entry.Icon!.name = icon != null ? icon.Name : "NoIcon";
                                 entry.IsFromThunderstore = true;
                                 if(manifest.GetValue("description") != null)
                                 {
@@ -82,6 +95,7 @@ namespace ModList
                         Texture2D tex = new(256, 256);
                         tex.LoadImage(Resource1.noicon);
                         entry.Icon = Sprite.Create(tex, new Rect(0, 0, tex.width, tex.height), new(0.5f, 0.5f));
+                        entry.Icon.name = "NoIcon";
                     }
                 }
                 Mods.Add(entry);
@@ -94,22 +108,35 @@ namespace ModList
         {
             if(SceneHelper.CurrentScene.Contains("Menu"))
             {
-                GameObject canvas = s.GetRootGameObjects().Where(c => c.name == "Canvas").First();
-                if(canvas.transform.Find("ModsButton") == null)
+                GameObject mainMenu = s.GetRootGameObjects().Where(c => c.name == "Canvas").First().transform.Find("Main Menu (1)").gameObject;
+                if(mainMenu.transform.Find("ModsButton") == null)
                 {
-                    GameObject button = Instantiate(ModsButton, canvas.GetComponent<RectTransform>());
-                    button.GetComponentInChildren<Button>().onClick.AddListener(() => OpenModMenu());
-                    RectTransform rect = button.GetComponent<RectTransform>();
-                    rect.SetPivot(PivotPresets.BottomLeft);
-                    rect.SetAnchor(AnchorPresets.BottomLeft);
-                    rect.anchoredPosition = new Vector2(5, 5);
+                    GameObject? button = Instantiate(ModsButton, mainMenu.GetComponent<RectTransform>());
+                    button?.GetComponentInChildren<Button>().onClick.AddListener(() => OpenModMenu());
+                    RectTransform? rect = button?.GetComponent<RectTransform>();
+                    if(rect != null)
+                    {
+                        rect.SetPivot(PivotPresets.BottomLeft);
+                        rect.SetAnchor(AnchorPresets.BottomLeft);
+                        rect.anchoredPosition = new Vector2(5, 5);
+                    }
                 }
             }
+        }
+        private DirectoryInfo? RecurseUntilParentIs(DirectoryInfo dir, string target)
+        {
+            DirectoryInfo final = dir;
+            while(final.Parent.Name != target)
+            {
+                if(final.Parent == null) return null;
+                final = final.Parent;
+            }
+            return final;
         }
         private void OpenModMenu()
         {
             RectTransform canvas = GameObject.Find("Canvas").GetComponent<RectTransform>();
-            Instantiate(ModmenuPrefab, canvas).AddComponent<ModMenu>();
+            Instantiate(ModmenuPrefab, canvas)!.AddComponent<ModMenu>();
         }
         public static T AorB<T>(T a, T b, Func<bool> condition)
         {
