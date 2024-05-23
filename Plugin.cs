@@ -16,7 +16,7 @@ using UnityEngine.UI;
 
 namespace ModList
 {
-    [BepInPlugin("com.zeddevstuff.modlist", "ModList", "1.0.1")]
+    [BepInPlugin("com.zeddevstuff.modlist", "ModList", "1.0.2")]
     public class Plugin : BaseUnityPlugin
     {
         public static List<ModEntry> Mods = new();
@@ -36,7 +36,15 @@ namespace ModList
             ModsButton = Bundle.LoadAsset<GameObject>("ModsButton");
             foreach(var plugin in plugins)
             {
-                AssemblyDescriptionAttribute desc = plugin.GetType().Assembly.GetCustomAttribute<AssemblyDescriptionAttribute>();
+                AssemblyDescriptionAttribute? desc;
+                try
+                {
+                    desc = (AssemblyDescriptionAttribute)plugin.GetType().Assembly.GetCustomAttribute(typeof(AssemblyDescriptionAttribute));
+                }
+                catch
+                {
+                    desc = new AssemblyDescriptionAttribute("");
+                }
                 ModEntry entry = new();
                 entry.Name = plugin.Info.Metadata.Name;
                 entry.BepInExGuid = plugin.Info.Metadata.GUID;
