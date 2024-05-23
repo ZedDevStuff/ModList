@@ -45,12 +45,21 @@ namespace ModList
                 {
                     desc = new AssemblyDescriptionAttribute("");
                 }
+                AssemblyCompanyAttribute? author;
+                try
+                {
+                    author = (AssemblyCompanyAttribute)plugin.GetType().Assembly.GetCustomAttribute(typeof(AssemblyCompanyAttribute));
+                }
+                catch
+                {
+                    author = new AssemblyCompanyAttribute("");
+                }
                 ModEntry entry = new();
                 entry.Name = plugin.Info.Metadata.Name;
                 entry.BepInExGuid = plugin.Info.Metadata.GUID;
                 entry.BepInExVersion = plugin.Info.Metadata.Version.ToString();
                 string[] deconstructedGuid = plugin.Info.Metadata.GUID.Split('.');
-                entry.Author = deconstructedGuid.Length >= 2 ? deconstructedGuid[1] : "Unknown Author";
+                entry.Author = author.Company != "" ? author.Company : (deconstructedGuid.Length >= 2 ? deconstructedGuid[1] : "Unknown Author");
                 entry.Description = IsStringWhiteSpaceOrEmpty(desc.Description) ? "No Description" : desc.Description;
                 DirectoryInfo? dir = new FileInfo(plugin.GetType().Assembly.Location).Directory;
                 if(dir != null)
@@ -91,10 +100,10 @@ namespace ModList
                                 entry.ThunderstoreVersion = manifest.GetValue("version_number")?.ToString() ?? "";
                                 string url = manifest.GetValue("website_url")?.ToString() ?? "";
                                 entry.AuthorWebsite = url != "" ? url : "";
-                                string author = manifestFile.Directory.Name.Replace("-" + modName, "");
-                                entry.ThunderstoreUrl = $"https://thunderstore.io/c/ultrakill/p/{author}/{modName}";
+                                string authorString = manifestFile.Directory.Name.Replace("-" + modName, "");
+                                entry.ThunderstoreUrl = $"https://thunderstore.io/c/ultrakill/p/{authorString}/{modName}";
                                 entry.ThunderstoreGuid = manifestFile.Directory.Name;
-                                entry.Author = author;
+                                if(author.Company == "") entry.Author = authorString;
                             }
                         }
                     }
